@@ -1,33 +1,39 @@
 from dotenv import load_dotenv
-from langchain_classic import hub #some communiity that allow us to download prompt shared by others
-from langchain_classic.agents import AgentExecutor
-from langchain_classic.agents.react.agent import create_react_agent
+
+from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
-from langchain_tavily import TavilySearch
-import os 
+from langchain_tavily import TavilySearch 
+
+
+from prompt import REACT_PROMPT_WITH_FORMAT_INSTRUCTIONS
+from schemas import AgentResponse
+
 load_dotenv(override=True)
 
 tools = [TavilySearch()]
 
-llm = ChatOpenAI(model="gpt-4")
-react_prompt = hub.pull("hwchase17/react")
-agent = create_react_agent(
-    llm=llm,
-    tools = tools, 
-    prompt=react_prompt
+model = ChatOpenAI(model ='gpt-4')
+
+agent = create_agent(
+    model= model,
+    tools = tools,
+    response_format=AgentResponse
 )
-agent_executor = AgentExecutor(agent=agent,tools=tools, verbose=True)
-chain = agent_executor
+
+
 
 def main():
-    result = chain.invoke(
-        input ={
-            "input":"search for 3 job postings for an ai engineer using langchain in the stamford ct atea on linkedin and list their details and post most recently"
-            ""
-        }
+    result = agent.invoke(
+       "messages":[
+           {
+               "role":"user",
+               "content":"search for 3 job positings for ai enginere in stamford"
+
+           }]
     )
-    print(result)
+    structured = result.get("structured_response",None)
+    print(structured if structured is not None else result)
 
 if __name__ == "__main__":
-
     main()
+
